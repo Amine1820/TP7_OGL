@@ -36,7 +36,6 @@ jacocoTestReport {
     reports {
         xml.required = true
         html.required = true
-        csv.enabled = false
     }
 }
 
@@ -45,7 +44,7 @@ sonarqube {
     properties {
         property "sonar.projectKey", "com.example:project-name"
         property "sonar.host.url", "http://localhost:9000"
-        property "sonar.login", "your-sonarqube-token" // Use a secure token
+        property "sonar.login", "d8063752dfd5d16a5b66a4354f2e0d4d35d3f77c" // Use a secure token
     }
 }
 
