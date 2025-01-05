@@ -81,12 +81,20 @@ pipeline {
     }
 
     post {
-        success {
-            echo 'Build completed successfully!'
-        }
+            success {
+                emailext (
+                    subject: "Build Success: ${currentBuild.fullDisplayName}",
+                    body: "The build was successful!",
+                    to: "la_melzi@esi.dz"
+                )
+            }
 
-        failure {
-            echo 'Build failed. Please check the logs.'
+            failure {
+                emailext (
+                    subject: "Build Failure: ${currentBuild.fullDisplayName}",
+                    body: "The build failed. Please check the logs.",
+                    to: "la_melzi@esi.dz"
+                )
+            }
         }
-    }
 }
