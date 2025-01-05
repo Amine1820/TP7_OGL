@@ -13,14 +13,11 @@ repositories {
     mavenCentral()
 }
 
-
 dependencies {
     testImplementation 'io.cucumber:cucumber-java:6.0.0'
     testImplementation 'io.cucumber:cucumber-junit:6.0.0'
     testImplementation 'junit:junit:4.12'
-
 }
-
 
 cucumberReports {
     outputDir = file('build/reports/cucumber/html')
@@ -28,14 +25,31 @@ cucumberReports {
     reports = files('reports/example-report.json')
 }
 
-
-
-
+// Ensure `test` task generates JaCoCo reports
 test {
     finalizedBy jacocoTestReport
 }
 
+// JaCoCo Test Report Configuration
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.enabled = false
+    }
+}
 
+// SonarQube Configuration
+sonarqube {
+    properties {
+        property "sonar.projectKey", "com.example:project-name"
+        property "sonar.host.url", "http://localhost:9000"
+        property "sonar.login", "your-sonarqube-token" // Use a secure token
+    }
+}
+
+// Publishing Configuration
 publishing {
     repositories {
         maven {

@@ -1,24 +1,11 @@
 pipeline {
     agent any
 
-    environment {
-        MAVEN_REPO_URL = 'https://mymavenrepo.com/repo/RcJxiPx2FgIXYY8orX58/'
-        MAVEN_REPO_USER = 'myMavenRepo'
-        MAVEN_REPO_PASS = 'Amine'
-    }
-
     stages {
         stage('Checkout') {
             steps {
                 echo 'Checking out the code...'
                 checkout scm
-            }
-        }
-
-        stage('Build') {
-            steps {
-                echo 'Building the project...'
-                bat './gradlew clean build -x test'
             }
         }
 
@@ -34,8 +21,6 @@ pipeline {
                 }
             }
         }
-
-
 
         stage('Code Coverage') {
             steps {
@@ -57,7 +42,7 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('Code Analysis') {
             steps {
                 echo 'Running SonarQube analysis...'
                 withSonarQubeEnv('sonar') { // Ensure SonarQube is configured in Jenkins
@@ -66,20 +51,36 @@ pipeline {
             }
         }
 
-      stage('Publish to Maven') {
-          steps {
-              echo 'Publishing artifacts to Maven repository...'
-              bat "./gradlew publish" // Make sure the Gradle wrapper is available
-          }
-      }
+        stage('Code Quality') {
+            steps {
+                echo 'Checking Quality Gates...'
+                script {
+                    timeout(time: 1, unit: 'MINUTES') {
+                        def qualityGate = waitForQualityGate()
+                        if (qualityGate.status != 'OK') {
+                            error "Pipeline aborted due to quality gate failure: ${qualityGate.status}"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo 'Building the project...'
+                bat './gradlew clean build -x test'
+            }
+        }
+
+        stage('Publish to Maven') {
+            steps {
+                echo 'Publishing artifacts to Maven repository...'
+                bat "./gradlew publish"
+            }
+        }
     }
 
     post {
-        always {
-            echo 'Cleaning up workspace...'
-            cleanWs()
-        }
-
         success {
             echo 'Build completed successfully!'
         }
