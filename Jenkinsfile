@@ -1,61 +1,115 @@
 pipeline {
     agent any
 
+    environment {
+        MAVEN_REPO_URL = 'https://mymavenrepo.com/repo/RcJxiPx2FgIXYY8orX58/'
+        MAVEN_REPO_USER = 'myMavenRepo'
+        MAVEN_REPO_PASS = 'Amine'
+    }
+
     stages {
-        stage('Test') {
+        stage('Checkout') {
             steps {
-                echo 'Running unit tests...'
-                bat './gradlew test'
-                junit '**/build/test-results/**/*.xml'  // Archivage des résultats
-                cucumberReports jsonPath: '**/build/reports/cucumber/*.json'
+                echo 'Checking out the code...'
+                checkout scm
             }
         }
-        stage('Code Analysis') {
+
+        stage('Build') {
+            steps {
+                echo 'Building the project...'
+                bat './gradlew clean build -x test'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                echo 'Running tests...'
+                bat './gradlew test'
+            }
+            post {
+                always {
+                    echo 'Archiving test results...'
+                    junit 'build/test-results/**/*.xml'
+                }
+            }
+        }
+
+        stage('Generate Cucumber Reports') {
+            steps {
+                echo 'Generating Cucumber reports...'
+                bat './gradlew cucumberReports'
+            }
+            post {
+                always {
+                    echo 'Archiving Cucumber reports...'
+                    publishHTML(target: [
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'build/reports/cucumber/html',
+                        reportFiles: 'index.html',
+                        reportName: 'Cucumber Report'
+                    ])
+                }
+            }
+        }
+
+        stage('Code Coverage') {
+            steps {
+                echo 'Generating Jacoco code coverage report...'
+                bat './gradlew jacocoTestReport'
+            }
+            post {
+                always {
+                    echo 'Publishing Jacoco report...'
+                    publishHTML(target: [
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'build/reports/jacoco/test/html',
+                        reportFiles: 'index.html',
+                        reportName: 'Jacoco Code Coverage Report'
+                    ])
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
             steps {
                 echo 'Running SonarQube analysis...'
-                withSonarQubeEnv('SonarQube') {
+                withSonarQubeEnv('SonarQube') { // Ensure SonarQube is configured in Jenkins
                     bat './gradlew sonarqube'
                 }
             }
         }
-        stage('Code Quality') {
+
+        stage('Publish to Maven') {
             steps {
-                echo 'Checking Quality Gates...'
-                timeout(time: 1, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+                echo 'Publishing artifacts to Maven repository...'
+                withCredentials([usernamePassword(
+                    credentialsId: 'maven-repo-credentials',
+                    usernameVariable: 'USERNAME',
+                    passwordVariable: 'PASSWORD'
+                )]) {
+                    bat "./gradlew publish -PmavenUser=$USERNAME -PmavenPassword=$PASSWORD"
                 }
-            }
-        }
-        stage('Build') {
-            steps {
-                echo 'Building application...'
-                bat './gradlew build jar'
-                echo 'Generating documentation...'
-                bat './gradlew javadoc'
-                archiveArtifacts artifacts: 'build/libs/*.jar, build/docs/javadoc/**', fingerprint: true
-            }
-        }
-        stage('Deploy') {
-            steps {
-                echo 'Deploying JAR to Maven repository...'
-                withCredentials([usernamePassword(credentialsId: 'mymavenrepo-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    bat './gradlew publish -PmavenUser=$USER -PmavenPassword=$PASS'
-                }
-            }
-        }
-        stage('Notification') {
-            steps {
-                echo 'Sending success notification...'
-                mail bcc: '', body: 'Le pipeline s\'est terminé avec succès.', subject: 'Pipeline Jenkins: Succès', to: 'team@example.com'
-                slackSend(channel: '#development', message: 'Déploiement réussi du projet.')
             }
         }
     }
+
     post {
+        always {
+            echo 'Cleaning up workspace...'
+            cleanWs()
+        }
+
+        success {
+            echo 'Build completed successfully!'
+        }
+
         failure {
-            echo 'Pipeline failed. Sending failure notification...'
-            mail bcc: '', body: 'Une erreur est survenue dans le pipeline Jenkins.', subject: 'Pipeline Jenkins: Échec', to: 'team@example.com'
-            slackSend(channel: '#development', message: 'Échec du pipeline Jenkins.')
+            echo 'Build failed. Please check the logs.'
         }
     }
 }
