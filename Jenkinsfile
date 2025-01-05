@@ -69,9 +69,8 @@ pipeline {
         stage('Publish to Maven') {
             steps {
                 echo 'Publishing artifacts to Maven repository...'
-                 {
-                    bat "./gradlew publish "
-                }
+                bat "./gradlew publish"
+
             }
         }
     }
