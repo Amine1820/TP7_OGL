@@ -87,7 +87,30 @@ pipeline {
                 bat "./gradlew publish"
             }
         }
+
     }
+
+     post {
+            success {
+                script {
+                    // Send email notification for success using Mailtrap SMTP
+                    mail to: "${TO_EMAIL}",
+                         subject: "Deployment Success",
+                         body: "The deployment was successful."
+                }
+            }
+
+            failure {
+                script {
+                    // Send email notification for failure using Mailtrap SMTP
+                    mail to: "${TO_EMAIL}",
+                         subject: "Deployment Failed",
+                         body: "The deployment failed. Please check the logs for more details."
+                }
+            }
+
+
+        }
 
 
 }
