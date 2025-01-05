@@ -39,10 +39,10 @@ test {
 publishing {
     repositories {
         maven {
-            url '${https://mymavenrepo.com/repo/RcJxiPx2FgIXYY8orX58/}'
+            url 'https://mymavenrepo.com/repo/RcJxiPx2FgIXYY8orX58/'
             credentials {
-                username 'myMavenRepo'
-                password "Amine"
+                username = 'myMavenRepo'
+                password = 'Amine'
             }
         }
     }

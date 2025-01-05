@@ -66,13 +66,12 @@ pipeline {
             }
         }
 
-        stage('Publish to Maven') {
-            steps {
-                echo 'Publishing artifacts to Maven repository...'
-                bat "./gradlew publish"
-
-            }
-        }
+      stage('Publish to Maven') {
+          steps {
+              echo 'Publishing artifacts to Maven repository...'
+              bat "./gradlew publish" // Make sure the Gradle wrapper is available
+          }
+      }
     }
 
     post {
