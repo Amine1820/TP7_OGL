@@ -1,6 +1,15 @@
 pipeline {
     agent any
 
+     environment {
+            // Define environment variables if needed (like Mailtrap details)
+            SMTP_SERVER = 'sandbox.smtp.mailtrap.io'
+            SMTP_USERNAME = 'a0c4d400e70cc1'
+            SMTP_PASSWORD = 'fa3dfbec2662df'
+            TO_EMAIL = 'la_melzi@esi.dz'
+        }
+
+
     stages {
         stage('Checkout') {
             steps {
@@ -80,21 +89,5 @@ pipeline {
         }
     }
 
-    post {
-            success {
-                emailext (
-                    subject: "Build Success: ${currentBuild.fullDisplayName}",
-                    body: "The build was successful!",
-                    to: "la_melzi@esi.dz"
-                )
-            }
 
-            failure {
-                emailext (
-                    subject: "Build Failure: ${currentBuild.fullDisplayName}",
-                    body: "The build failed. Please check the logs.",
-                    to: "la_melzi@esi.dz"
-                )
-            }
-        }
 }
