@@ -69,12 +69,8 @@ pipeline {
         stage('Publish to Maven') {
             steps {
                 echo 'Publishing artifacts to Maven repository...'
-                withCredentials([usernamePassword(
-                    credentialsId: 'maven-repo-credentials',
-                    usernameVariable: 'USERNAME',
-                    passwordVariable: 'PASSWORD'
-                )]) {
-                    bat "./gradlew publish -PmavenUser=$USERNAME -PmavenPassword=$PASSWORD"
+                 {
+                    bat "./gradlew publish "
                 }
             }
         }
