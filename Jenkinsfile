@@ -5,7 +5,7 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Running unit tests...'
-                sh './gradlew test'
+                bat './gradlew test'
                 junit '**/build/test-results/**/*.xml'  // Archivage des résultats
                 cucumberReports jsonPath: '**/build/reports/cucumber/*.json'
             }
@@ -14,7 +14,7 @@ pipeline {
             steps {
                 echo 'Running SonarQube analysis...'
                 withSonarQubeEnv('SonarQube') {
-                    sh './gradlew sonarqube'
+                    bat './gradlew sonarqube'
                 }
             }
         }
@@ -29,9 +29,9 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building application...'
-                sh './gradlew build jar'
+                bat './gradlew build jar'
                 echo 'Generating documentation...'
-                sh './gradlew javadoc'
+                bat './gradlew javadoc'
                 archiveArtifacts artifacts: 'build/libs/*.jar, build/docs/javadoc/**', fingerprint: true
             }
         }
@@ -39,7 +39,7 @@ pipeline {
             steps {
                 echo 'Deploying JAR to Maven repository...'
                 withCredentials([usernamePassword(credentialsId: 'mymavenrepo-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh './gradlew publish -PmavenUser=$USER -PmavenPassword=$PASS'
+                    bat './gradlew publish -PmavenUser=$USER -PmavenPassword=$PASS'
                 }
             }
         }
