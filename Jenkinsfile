@@ -35,25 +35,7 @@ pipeline {
             }
         }
 
-        stage('Generate Cucumber Reports') {
-            steps {
-                echo 'Generating Cucumber reports...'
-                bat './gradlew cucumberReports'
-            }
-            post {
-                always {
-                    echo 'Archiving Cucumber reports...'
-                    publishHTML(target: [
-                        allowMissing: false,
-                        alwaysLinkToLastBuild: true,
-                        keepAll: true,
-                        reportDir: 'build/reports/cucumber/html',
-                        reportFiles: 'index.html',
-                        reportName: 'Cucumber Report'
-                    ])
-                }
-            }
-        }
+
 
         stage('Code Coverage') {
             steps {
