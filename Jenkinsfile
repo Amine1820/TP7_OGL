@@ -60,7 +60,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 echo 'Running SonarQube analysis...'
-                withSonarQubeEnv('SonarQube') { // Ensure SonarQube is configured in Jenkins
+                withSonarQubeEnv('sonar') { // Ensure SonarQube is configured in Jenkins
                     bat './gradlew sonarqube'
                 }
             }
