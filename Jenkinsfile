@@ -1,14 +1,24 @@
 pipeline {
     agent any
 
-     environment {
-            // Define environment variables if needed (like Mailtrap details)
-            SMTP_SERVER = 'sandbox.smtp.mailtrap.io'
-            SMTP_USERNAME = 'a0c4d400e70cc1'
-            SMTP_PASSWORD = 'fa3dfbec2662df'
-            TO_EMAIL = 'la_melzi@esi.dz'
-        }
+    environment {
+        // Load credentials from Jenkins credentials store
+        SMTP_CREDS = credentials('mailtrap-smtp-credentials') // ID of username/password credential
+        TO_EMAIL = credentials('notification-email') // ID of secret text credential
 
+        // Load from Jenkins configuration
+        SONAR_HOME = tool name: 'SonarScanner' // SonarQube Scanner installation
+        JAVA_HOME = tool name: 'JDK11'
+        MAVEN_HOME = tool name: 'Maven3'
+
+        // If you have a Jenkins configuration file, you can load properties
+        DEPLOY_ENV = "${params.DEPLOY_ENV ?: 'development'}"
+    }
+
+    tools {
+        maven 'Maven3'
+        jdk 'JDK11'
+    }
 
     stages {
         stage('Checkout') {
@@ -21,31 +31,35 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Running tests...'
-                bat './gradlew test'
+                sh "mvn test"
             }
             post {
                 always {
-                    echo 'Archiving test results...'
-                    junit 'build/test-results/**/*.xml'
+                    junit '**/target/surefire-reports/*.xml'
                 }
             }
         }
 
         stage('Code Coverage') {
             steps {
-                echo 'Generating Jacoco code coverage report...'
-                bat './gradlew jacocoTestReport'
+                echo 'Generating JaCoCo code coverage report...'
+                sh "mvn verify org.jacoco:jacoco-maven-plugin:prepare-agent"
             }
             post {
                 always {
-                    echo 'Publishing Jacoco report...'
+                    jacoco(
+                        execPattern: 'target/*.exec',
+                        classPattern: 'target/classes',
+                        sourcePattern: 'src/main/java',
+                        exclusionPattern: 'src/test/*'
+                    )
                     publishHTML(target: [
                         allowMissing: false,
                         alwaysLinkToLastBuild: true,
                         keepAll: true,
-                        reportDir: 'build/reports/jacoco/test/html',
+                        reportDir: 'target/site/jacoco',
                         reportFiles: 'index.html',
-                        reportName: 'Jacoco Code Coverage Report'
+                        reportName: 'JaCoCo Code Coverage Report'
                     ])
                 }
             }
@@ -54,22 +68,18 @@ pipeline {
         stage('Code Analysis') {
             steps {
                 echo 'Running SonarQube analysis...'
-                withSonarQubeEnv('sonar') { // Ensure SonarQube is configured in Jenkins
-                    bat './gradlew sonarqube'
+                withSonarQubeEnv('sonar') {
+                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                        sh "mvn sonar:sonar -Dsonar.login=${SONAR_TOKEN}"
+                    }
                 }
             }
         }
 
         stage('Code Quality') {
             steps {
-                echo 'Checking Quality Gates...'
-                script {
-                    timeout(time: 1, unit: 'MINUTES') {
-                        def qualityGate = waitForQualityGate()
-                        if (qualityGate.status != 'OK') {
-                            error "Pipeline aborted due to quality gate failure: ${qualityGate.status}"
-                        }
-                    }
+                timeout(time: 1, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
@@ -77,40 +87,61 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building the project...'
-                bat './gradlew clean build -x test'
+                sh "mvn clean package -DskipTests"
             }
         }
 
         stage('Publish to Maven') {
             steps {
                 echo 'Publishing artifacts to Maven repository...'
-                bat "./gradlew publish"
+                withCredentials([usernamePassword(
+                    credentialsId: 'maven-repo-credentials',
+                    usernameVariable: 'MAVEN_USERNAME',
+                    passwordVariable: 'MAVEN_PASSWORD'
+                )]) {
+                    sh """
+                        mvn deploy -DskipTests \
+                        -Drepository.username=${MAVEN_USERNAME} \
+                        -Drepository.password=${MAVEN_PASSWORD}
+                    """
+                }
             }
         }
-
     }
 
-     post {
-            success {
-                script {
-                    // Send email notification for success using Mailtrap SMTP
-                    mail to: "${TO_EMAIL}",
-                         subject: "Deployment Success",
-                         body: "The deployment was successful."
-                }
+    post {
+        success {
+            script {
+                emailext (
+                    to: "${TO_EMAIL}",
+                    subject: "${env.JOB_NAME} - Build #${env.BUILD_NUMBER} - Success",
+                    body: """
+                        <p>Build Status: Success</p>
+                        <p>Job: ${env.JOB_NAME}</p>
+                        <p>Build Number: ${env.BUILD_NUMBER}</p>
+                        <p>Build URL: ${env.BUILD_URL}</p>
+                    """,
+                    mimeType: 'text/html',
+                    attachLog: true
+                )
             }
-
-            failure {
-                script {
-                    // Send email notification for failure using Mailtrap SMTP
-                    mail to: "${TO_EMAIL}",
-                         subject: "Deployment Failed",
-                         body: "The deployment failed. Please check the logs for more details."
-                }
-            }
-
-
         }
 
-
+        failure {
+            script {
+                emailext (
+                    to: "${TO_EMAIL}",
+                    subject: "${env.JOB_NAME} - Build #${env.BUILD_NUMBER} - Failed",
+                    body: """
+                        <p>Build Status: Failed</p>
+                        <p>Job: ${env.JOB_NAME}</p>
+                        <p>Build Number: ${env.BUILD_NUMBER}</p>
+                        <p>Build URL: ${env.BUILD_URL}</p>
+                    """,
+                    mimeType: 'text/html',
+                    attachLog: true
+                )
+            }
+        }
+    }
 }
