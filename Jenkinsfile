@@ -6,19 +6,12 @@ pipeline {
         SMTP_CREDS = credentials('mailtrap-smtp-credentials') // ID of username/password credential
         TO_EMAIL = credentials('notification-email') // ID of secret text credential
 
-        // Load from Jenkins configuration
-        SONAR_HOME = tool name: 'SonarScanner' // SonarQube Scanner installation
-        JAVA_HOME = tool name: 'JDK11'
-        MAVEN_HOME = tool name: 'Maven3'
 
         // If you have a Jenkins configuration file, you can load properties
         DEPLOY_ENV = "${params.DEPLOY_ENV ?: 'development'}"
     }
 
-    tools {
-        maven 'Maven3'
-        jdk 'JDK11'
-    }
+
 
     stages {
         stage('Checkout') {
@@ -31,7 +24,7 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Running tests...'
-                sh "mvn test"
+                sh " make check"
             }
             post {
                 always {
