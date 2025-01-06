@@ -12,7 +12,7 @@ jobs:
   cucumber-tests:
     runs-on: ubuntu-latest
 
-    env:  # Changed from 'environment' to 'env'
+    env:
       SMTP_SERVER: 'sandbox.smtp.mailtrap.io'
       SMTP_USERNAME: 'a0c4d400e70cc1'
       SMTP_PASSWORD: 'fa3dfbec2662df'
@@ -21,6 +21,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
       - name: Cache Gradle dependencies
         uses: actions/cache@v2
@@ -65,7 +68,7 @@ jobs:
 
   notify:
     runs-on: ubuntu-latest
-    needs: cucumber-tests  # Added to ensure this runs after the main job
+    needs: cucumber-tests
     steps:
       - name: Send email on success
         if: success()
