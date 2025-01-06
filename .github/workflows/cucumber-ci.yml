@@ -59,7 +59,7 @@ jobs:
         run: |
           echo "Waiting for quality gate result"
           curl -u "admin:${{ secrets.SONARQUBE_TOKEN }}" \
-               -X GET "http://localhost:9000/api/qualitygates/project_status?projectKey=my_project"
+               -X GET "http://197.140.142.82:9000/api/qualitygates/project_status?projectKey=my_project"
 
       - name: Build the project
         run: ./gradlew clean build -x test
