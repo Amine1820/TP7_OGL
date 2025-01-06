@@ -51,7 +51,7 @@ jobs:
           cp -r build/reports/jacoco/test/html jacoco-report/
 
       - name: Run SonarQube analysis
-        run: ./gradlew sonarqube
+        run: ./gradlew sonar
         env:
           SONARQUBE_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
 
