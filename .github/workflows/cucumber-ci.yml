@@ -17,6 +17,7 @@ jobs:
       SMTP_USERNAME: 'a0c4d400e70cc1'
       SMTP_PASSWORD: 'fa3dfbec2662df'
       TO_EMAIL: 'la_melzi@esi.dz'
+      SONARQUBE_TOKEN: 'd8063752dfd5d16a5b66a4354f2e0d4d35d3f77c'
 
     steps:
       - name: Checkout code
