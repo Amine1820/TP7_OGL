@@ -1,15 +1,14 @@
 pipeline {
     agent any
 
-    // Since we're not using any environment variables, we can remove the environment block
-    // If you need to add environment variables later, you can uncomment and add them
-    /*
-    environment {
-        // Add environment variables here if needed
-        // Example:
-        // MAKE_PATH = tool name: 'make'
-    }
-    */
+     environment {
+            // Define environment variables if needed (like Mailtrap details)
+            SMTP_SERVER = 'sandbox.smtp.mailtrap.io'
+            SMTP_USERNAME = 'a0c4d400e70cc1'
+            SMTP_PASSWORD = 'fa3dfbec2662df'
+            TO_EMAIL = 'la_melzi@esi.dz'
+        }
+
 
     stages {
         stage('Checkout') {
@@ -22,24 +21,96 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Running tests...'
-                // Make sure 'make' is installed and available in the PATH
-                sh "make check"
+                bat './gradlew test'
             }
             post {
                 always {
-                    junit '**/target/surefire-reports/*.xml'
+                    echo 'Archiving test results...'
+                    junit 'build/test-results/**/*.xml'
                 }
             }
         }
+
+        stage('Code Coverage') {
+            steps {
+                echo 'Generating Jacoco code coverage report...'
+                bat './gradlew jacocoTestReport'
+            }
+            post {
+                always {
+                    echo 'Publishing Jacoco report...'
+                    publishHTML(target: [
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'build/reports/jacoco/test/html',
+                        reportFiles: 'index.html',
+                        reportName: 'Jacoco Code Coverage Report'
+                    ])
+                }
+            }
+        }
+
+        stage('Code Analysis') {
+            steps {
+                echo 'Running SonarQube analysis...'
+                withSonarQubeEnv('sonar') { // Ensure SonarQube is configured in Jenkins
+                    bat './gradlew sonarqube'
+                }
+            }
+        }
+
+        stage('Code Quality') {
+            steps {
+                echo 'Checking Quality Gates...'
+                script {
+                    timeout(time: 1, unit: 'MINUTES') {
+                        def qualityGate = waitForQualityGate()
+                        if (qualityGate.status != 'OK') {
+                            error "Pipeline aborted due to quality gate failure: ${qualityGate.status}"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo 'Building the project...'
+                bat './gradlew clean build -x test'
+            }
+        }
+
+        stage('Publish to Maven') {
+            steps {
+                echo 'Publishing artifacts to Maven repository...'
+                bat "./gradlew publish"
+            }
+        }
+
     }
 
-    // Optional: Add post actions for success/failure handling
-    post {
-        failure {
-            echo 'The Pipeline failed :('
+     post {
+            success {
+                script {
+                    // Send email notification for success using Mailtrap SMTP
+                    mail to: "${TO_EMAIL}",
+                         subject: "Deployment Success",
+                         body: "The deployment was successful."
+                }
+            }
+
+            failure {
+                script {
+                    // Send email notification for failure using Mailtrap SMTP
+                    mail to: "${TO_EMAIL}",
+                         subject: "Deployment Failed",
+                         body: "The deployment failed. Please check the logs for more details."
+                }
+            }
+
+
         }
-        success {
-            echo 'The Pipeline completed successfully :)'
-        }
-    }
-}
+
+
+} without using the build.gradle for all stages get them directly from jenkinks
