@@ -113,4 +113,4 @@ pipeline {
         }
 
 
-} without using the build.gradle for all stages get them directly from jenkinks
+}
