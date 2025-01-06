@@ -1,0 +1,98 @@
+name: CI Pipeline with Cucumber and Code Analysis
+
+on:
+  push:
+    branches:
+      - main  # Adjust this if you're using a different branch
+  pull_request:
+    branches:
+      - main  # Adjust this if you're using a different branch
+
+jobs:
+  cucumber-tests:
+    runs-on: ubuntu-latest  # You can change this if you need another environment
+
+    environment:
+      SMTP_SERVER: 'sandbox.smtp.mailtrap.io'
+      SMTP_USERNAME: 'a0c4d400e70cc1'
+      SMTP_PASSWORD: 'fa3dfbec2662df'
+      TO_EMAIL: 'la_melzi@esi.dz'
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+
+      # Step 3: Cache Gradle dependencies
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.gradle
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      # Step 4: Run tests
+      - name: Run tests
+        run: ./gradlew test
+
+      # Step 5: Archive test results
+      - name: Archive test results
+        if: always()
+        run: |
+          mkdir -p test-reports
+          cp build/test-results/**/*.xml test-reports/
+        continue-on-error: true
+
+      # Step 6: Generate and publish Jacoco report
+      - name: Generate Jacoco code coverage report
+        run: ./gradlew jacocoTestReport
+
+      - name: Publish Jacoco report
+        run: |
+          mkdir -p jacoco-report
+          cp -r build/reports/jacoco/test/html jacoco-report/
+
+      # Step 7: Run SonarQube analysis (ensure SonarQube is configured in your environment)
+      - name: Run SonarQube analysis
+        run: ./gradlew sonarqube
+        env:
+          SONARQUBE_TOKEN: ${{ secrets.SONARQUBE_TOKEN }} # If you're using a secret for the token
+
+      # Step 8: Check Code Quality with Quality Gates
+      - name: Wait for Quality Gate
+        run: |
+          echo "Waiting for quality gate result"
+          curl -u "admin:${{ secrets.SONARQUBE_TOKEN }}" \
+               -X GET "http://localhost:9000/api/qualitygates/project_status?projectKey=my_project"  # Adjust URL as needed
+
+      # Step 9: Build the project (without tests)
+      - name: Build the project
+        run: ./gradlew clean build -x test
+
+      # Step 10: Publish to Maven (if required)
+      - name: Publish artifacts to Maven repository
+        run: ./gradlew publish
+
+  # Post actions to send email notifications based on success or failure
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send email on success
+        if: success()
+        run: |
+          curl --url "smtp://${{ secrets.SMTP_SERVER }}" \
+               --ssl-reqd \
+               --mail-from "${{ secrets.SMTP_USERNAME }}" \
+               --mail-rcpt "${{ secrets.TO_EMAIL }}" \
+               --user "${{ secrets.SMTP_USERNAME }}:${{ secrets.SMTP_PASSWORD }}" \
+               -T <(echo -e "Subject: Deployment Success\n\nThe deployment was successful.")
+
+      - name: Send email on failure
+        if: failure()
+        run: |
+          curl --url "smtp://${{ secrets.SMTP_SERVER }}" \
+               --ssl-reqd \
+               --mail-from "${{ secrets.SMTP_USERNAME }}" \
+               --mail-rcpt "${{ secrets.TO_EMAIL }}" \
+               --user "${{ secrets.SMTP_USERNAME }}:${{ secrets.SMTP_PASSWORD }}" \
+               -T <(echo -e "Subject: Deployment Failed\n\nThe deployment failed. Please check the logs.")
