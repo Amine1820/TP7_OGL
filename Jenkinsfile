@@ -68,33 +68,34 @@ pipeline {
             steps {
                 echo 'Checking Quality Gates...'
                 script {
-                                    timeout(time: 5, unit: 'MINUTES') {
-                                        def qualityGate = waitForQualityGate()
-                                        if (qualityGate.status == 'FAILED') {  // Vérifie si l'état est "FAILED"
-                                            error "Quality Gate failed: ${qualityGate.status}"
-                                        }
-                                    }
+                    timeout(time: 5, unit: 'MINUTES') {
+                        def qualityGate = waitForQualityGate()
+                        if (qualityGate.status == 'FAILED') {
+                            error "Pipeline aborted due to quality gate failure: ${qualityGate.status}"
+                        }
+                    }
+                }
             }
         }
 
-        stage('Build') {
-                   steps {
-                       script {
-                           echo 'Building the project...'
+         stage('Build') {
+                    steps {
+                        script {
+                            echo 'Building the project...'
 
-                           // Étape 1 : Génération du fichier Jar
-                           bat './gradlew clean build -x test'
+                            // Étape 1 : Génération du fichier Jar
+                            bat './gradlew clean build -x test'
 
-                           // Étape 2 : Génération de la documentation
-                           echo 'Generating documentation...'
-                           bat './gradlew javadoc'
+                            // Étape 2 : Génération de la documentation
+                            echo 'Generating documentation...'
+                            bat './gradlew javadoc'
 
-                           // Étape 3 : Archivage du fichier Jar et de la documentation
-                           echo 'Archiving artifacts...'
-                           archiveArtifacts artifacts: 'build/libs/*.jar, build/docs/javadoc/**', fingerprint: true
-                       }
-                   }
-               }
+                            // Étape 3 : Archivage du fichier Jar et de la documentation
+                            echo 'Archiving artifacts...'
+                            archiveArtifacts artifacts: 'build/libs/*.jar, build/docs/javadoc/**', fingerprint: true
+                        }
+                    }
+                }
 
         stage('Publish to Maven') {
             steps {
@@ -102,7 +103,7 @@ pipeline {
                 bat "./gradlew publish"
             }
         }
-
+    }
 
     post {
         success {
