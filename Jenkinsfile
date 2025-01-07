@@ -29,17 +29,10 @@ pipeline {
             }
         }
 
-        stage('Cucumber Tests') {
+        stage('Cucumber Reports') {
             steps {
-                echo 'Running Cucumber tests...'
-                bat './gradlew cucumberReports'
-            }
-            post {
-                always {
-                    echo 'Archiving Cucumber reports...'
-                    archiveArtifacts artifacts: '**/build/reports/cucumber.html', allowEmptyArchive: true
-                    junit '**/build/test-results/cucumber.json'
-                }
+                echo 'Archiving Cucumber HTML reports...'
+                archiveArtifacts artifacts: 'build/reports/cucumber/html/cucumber-html-reports/*', allowEmptyArchive: true
             }
         }
 
