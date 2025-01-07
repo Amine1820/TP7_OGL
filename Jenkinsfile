@@ -64,7 +64,6 @@ pipeline {
                 }
             }
         }
-
         stage('Code Quality') {
             steps {
                 echo 'Checking Quality Gates...'
