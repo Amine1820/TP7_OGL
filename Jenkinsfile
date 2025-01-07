@@ -63,7 +63,7 @@ pipeline {
                 }
             }
         }
-     /*   stage('Code Quality') {
+       stage('Code Quality') {
             steps {
                 echo 'Checking Quality Gates...'
                 script {
@@ -76,7 +76,7 @@ pipeline {
                 }
             }
         }
-        */
+
 
          stage('Build') {
                     steps {
