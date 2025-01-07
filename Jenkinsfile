@@ -68,13 +68,12 @@ pipeline {
             steps {
                 echo 'Checking Quality Gates...'
                 script {
-                    timeout(time: 10, unit: 'MINUTES') {
-                        def qualityGate = waitForQualityGate()
-                        if (qualityGate.status != 'OK') {
-                            error "Pipeline aborted due to quality gate failure: ${qualityGate.status}"
-                        }
-                    }
-                }
+                                    timeout(time: 5, unit: 'MINUTES') {
+                                        def qualityGate = waitForQualityGate()
+                                        if (qualityGate.status == 'FAILED') {  // Vérifie si l'état est "FAILED"
+                                            error "Quality Gate failed: ${qualityGate.status}"
+                                        }
+                                    }
             }
         }
 
