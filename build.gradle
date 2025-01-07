@@ -25,7 +25,7 @@ cucumberReports {
     reports = files('reports/example-report.json')
 }
 
-// Ensure `test` task generates JaCoCo reports
+
 test {
     finalizedBy jacocoTestReport
 }
@@ -43,8 +43,8 @@ jacocoTestReport {
 sonarqube {
     properties {
         property "sonar.projectKey", "com.example:TP7"
-        property "sonar.host.url", "http://197.140.142.82:9000"
-        property "sonar.login", "d8063752dfd5d16a5b66a4354f2e0d4d35d3f77c" // Use a secure token
+        property "sonar.host.url", "http://localhost:9000/"
+        property "sonar.login", "d8063752dfd5d16a5b66a4354f2e0d4d35d3f77c"
         property 'sonar.skipCompile', 'true'
     }
 }
