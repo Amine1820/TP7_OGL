@@ -78,11 +78,23 @@ pipeline {
         }
 
         stage('Build') {
-            steps {
-                echo 'Building the project...'
-                bat './gradlew clean build -x test'
-            }
-        }
+                   steps {
+                       script {
+                           echo 'Building the project...'
+
+                           // Étape 1 : Génération du fichier Jar
+                           bat './gradlew clean build -x test'
+
+                           // Étape 2 : Génération de la documentation
+                           echo 'Generating documentation...'
+                           bat './gradlew javadoc'
+
+                           // Étape 3 : Archivage du fichier Jar et de la documentation
+                           echo 'Archiving artifacts...'
+                           archiveArtifacts artifacts: 'build/libs/*.jar, build/docs/javadoc/**', fingerprint: true
+                       }
+                   }
+               }
 
         stage('Publish to Maven') {
             steps {
