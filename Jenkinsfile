@@ -28,7 +28,6 @@ pipeline {
                 }
             }
         }
-
         stage('Cucumber Reports') {
             steps {
                 echo 'Archiving Cucumber HTML reports...'
