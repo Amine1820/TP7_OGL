@@ -1,14 +1,12 @@
 pipeline {
     agent any
 
-     environment {
-            // Define environment variables if needed (like Mailtrap details)
-            SMTP_SERVER = 'sandbox.smtp.mailtrap.io'
-            SMTP_USERNAME = 'a0c4d400e70cc1'
-            SMTP_PASSWORD = 'fa3dfbec2662df'
-            TO_EMAIL = 'la_melzi@esi.dz'
-        }
-
+    environment {
+        SMTP_SERVER = 'sandbox.smtp.mailtrap.io'
+        SMTP_USERNAME = 'a0c4d400e70cc1'
+        SMTP_PASSWORD = 'fa3dfbec2662df'
+        TO_EMAIL = 'la_melzi@esi.dz'
+    }
 
     stages {
         stage('Checkout') {
@@ -27,6 +25,20 @@ pipeline {
                 always {
                     echo 'Archiving test results...'
                     junit 'build/test-results/**/*.xml'
+                }
+            }
+        }
+
+        stage('Cucumber Tests') {
+            steps {
+                echo 'Running Cucumber tests...'
+                bat './gradlew cucumberReports'
+            }
+            post {
+                always {
+                    echo 'Archiving Cucumber reports...'
+                    archiveArtifacts artifacts: '**/build/reports/cucumber.html', allowEmptyArchive: true
+                    junit '**/build/test-results/cucumber.json'
                 }
             }
         }
@@ -54,7 +66,7 @@ pipeline {
         stage('Code Analysis') {
             steps {
                 echo 'Running SonarQube analysis...'
-                withSonarQubeEnv('sonar') { // Ensure SonarQube is configured in Jenkins
+                withSonarQubeEnv('sonar') {
                     bat './gradlew sonarqube'
                 }
             }
@@ -87,30 +99,25 @@ pipeline {
                 bat "./gradlew publish"
             }
         }
-
     }
 
-     post {
-            success {
-                script {
-                    // Send email notification for success using Mailtrap SMTP
-                    mail to: "${TO_EMAIL}",
-                         subject: "Deployment Success",
-                         body: "The deployment was successful."
-                }
+    post {
+        success {
+            script {
+                // Send email notification for success using Mailtrap SMTP
+                mail to: "${TO_EMAIL}",
+                     subject: "Deployment Success",
+                     body: "The deployment was successful."
             }
-
-            failure {
-                script {
-                    // Send email notification for failure using Mailtrap SMTP
-                    mail to: "${TO_EMAIL}",
-                         subject: "Deployment Failed",
-                         body: "The deployment failed. Please check the logs for more details."
-                }
-            }
-
-
         }
 
-
+        failure {
+            script {
+                // Send email notification for failure using Mailtrap SMTP
+                mail to: "${TO_EMAIL}",
+                     subject: "Deployment Failed",
+                     body: "The deployment failed. Please check the logs for more details."
+            }
+        }
+    }
 }
