@@ -102,7 +102,7 @@ pipeline {
                 bat "./gradlew publish"
             }
         }
-    }
+
 
     post {
         success {
