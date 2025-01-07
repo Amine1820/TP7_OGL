@@ -83,7 +83,6 @@ pipeline {
                     steps {
                         script {
                             echo 'Building the project...'
-
                             // Étape 1 : Génération du fichier Jar
                             bat './gradlew clean build -x test'
 
@@ -100,7 +99,7 @@ pipeline {
 
         stage('Publish to Maven') {
             steps {
-                echo 'Publishing artifacts to Maven repository...'
+                echo 'Publishing artifacts to Maven repository... '
                 bat "./gradlew publish"
             }
         }
