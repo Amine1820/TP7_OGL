@@ -107,7 +107,7 @@ pipeline {
                     )
                 }
                 unstable {
-                    slackSend message: "Build or tests are unstable. Review the logs."
+                    slackSend message: "Build or tests are unstable. Review the logs. "
                     mail(
                         to: 'la_melzi@esi.dz',
                         subject: 'Jenkins Build Unstable',
