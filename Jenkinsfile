@@ -95,7 +95,7 @@ pipeline {
 
     post {
             success {
-                slackSend message: "Build and tests passed successfully!"
+                slackSend message: "Build and tests passed successfully! "
             }
             failure {
                 slackSend message: "Build or tests failed! Check Jenkins for details."
