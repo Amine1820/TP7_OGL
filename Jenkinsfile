@@ -106,22 +106,14 @@ pipeline {
     }
 
     post {
-        success {
-            script {
-                // Send email notification for success using Mailtrap SMTP
-                mail to: "${TO_EMAIL}",
-                     subject: "Deployment Success",
-                     body: "The deployment was successful."
+            success {
+                slackSend(channel: '#tp-ogl', color: 'good', message: "Build and tests passed successfully!")
+            }
+            failure {
+                slackSend(channel: '#tp-ogl', color: 'danger', message: "Build or tests failed! Check Jenkins for details.")
+            }
+            unstable {
+                slackSend(channel: '#tp-ogl', color: 'warning', message: "Build or tests are unstable. Review the logs.")
             }
         }
-
-        failure {
-            script {
-                // Send email notification for failure using Mailtrap SMTP
-                mail to: "${TO_EMAIL}",
-                     subject: "Deployment Failed",
-                     body: "The deployment failed. Please check the logs for more details."
-            }
-        }
-    }
 }
