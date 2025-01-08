@@ -91,7 +91,7 @@ pipeline {
             }
             post {
                 success {
-                    slackSend (message: "Build and tests passed successfully!" , color: 'good' )
+                    slackSend (message: "Build and tests passed successfully! " , color: 'good' )
                     mail(
                         to: 'la_melzi@esi.dz',
                         subject: 'Jenkins Build Success',
