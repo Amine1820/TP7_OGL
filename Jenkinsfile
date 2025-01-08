@@ -95,13 +95,13 @@ pipeline {
 
     post {
             success {
-                slackSend( color: 'good', message: "Build and tests passed successfully!" )
+                slackSend message: "Build and tests passed successfully!"
             }
             failure {
-                slackSend( color: 'danger', message: "Build or tests failed! Check Jenkins for details." )
+                slackSend message: "Build or tests failed! Check Jenkins for details."
             }
             unstable {
-                slackSend(color: 'warning', message: "Build or tests are unstable. Review the logs." )
+                slackSend message: "Build or tests are unstable. Review the logs."
             }
         }
 }
