@@ -4,7 +4,6 @@ on:
   push:
     branches: [ main ]
 
-
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -27,13 +26,12 @@ jobs:
       - name: Test
         run: ./gradlew test
 
-      - name: Publish Test Results
-        uses: dorny/test-reporter@v1
+      - name: Archive Test Results
+        uses: actions/upload-artifact@v3
         if: always()
         with:
-          name: JUnit Tests
+          name: test-results
           path: build/test-results/**/*.xml
-          reporter: java-junit
 
       - name: Archive Cucumber Reports
         uses: actions/upload-artifact@v3
