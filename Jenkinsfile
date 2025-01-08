@@ -95,13 +95,13 @@ pipeline {
 
     post {
             success {
-                slackSend(channel: '#tp-ogl', color: 'good', message: "Build and tests passed successfully!")
+                slackSend(channel: '#tp-ogl', color: 'good', message: "Build and tests passed successfully!" , baseUrl :"https://hooks.slack.com/services/" , token : "T087PD9PAF4/B088CCJE3QQ/gbTfd12jvFMu7Rs5TnnePK8H")
             }
             failure {
-                slackSend(channel: '#tp-ogl', color: 'danger', message: "Build or tests failed! Check Jenkins for details.")
+                slackSend(channel: '#tp-ogl', color: 'danger', message: "Build or tests failed! Check Jenkins for details." , baseUrl :"https://hooks.slack.com/services/" , token : "T087PD9PAF4/B088CCJE3QQ/gbTfd12jvFMu7Rs5TnnePK8H")
             }
             unstable {
-                slackSend(channel: '#tp-ogl', color: 'warning', message: "Build or tests are unstable. Review the logs.")
+                slackSend(channel: '#tp-ogl', color: 'warning', message: "Build or tests are unstable. Review the logs." , baseUrl :"https://hooks.slack.com/services/" , token : "T087PD9PAF4/B088CCJE3QQ/gbTfd12jvFMu7Rs5TnnePK8H")
             }
         }
 }
