@@ -49,9 +49,24 @@ jobs:
           name: jacoco-report
           path: build/reports/jacoco/test/html
 
+      - name: Sonar Qube Scan
+        run: ./gradlew sonar
 
-
-
+#     - name: Check SonarQube Quality Gate
+#       env:
+#       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#       run: |
+#          STATUS=$(curl -s -u "${SONAR_TOKEN}:" \
+#            "https://sonar.your-server.com/api/qualitygates/project_status?projectKey=your_project_key" \
+#            | jq -r '.projectStatus.status')
+#
+#          # Check if Quality Gate status is "FAILED"
+#          if [ "$STATUS" == "FAILED" ]; then
+#            echo "Quality Gate FAILED. Stopping pipeline."
+#            exit 1
+#          else
+#            echo "Quality Gate PASSED."
+#          fi
 
       - name: Build
         run: |
@@ -95,6 +110,6 @@ jobs:
             connection_url: ${{ secrets.CONNECTION }}
             from: ${{ secrets.SENDER }}
             to: ${{ secrets.RECEIVER }}
-            subject: "TP7 OGL - la_melzi@esi.dz - Github Actions"
+            subject: "TP7 OGL - Github Actions"
             html_body: "Workflow Status: ${{ job.status }}"
             priority: normal
