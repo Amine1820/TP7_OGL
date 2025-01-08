@@ -16,6 +16,7 @@ pipeline {
                 }
             }
         }
+
         stage('Code Coverage') {
             steps {
                 echo 'Generating Jacoco code coverage report...'
@@ -45,6 +46,20 @@ pipeline {
             }
         }
 
+        stage('Code Quality') {
+            steps {
+                script {
+                    echo 'Checking SonarQube Quality Gate status...'
+                    // Wait for the Quality Gate status to be available
+                    def qualityGate = waitForQualityGate()
+                    // If the Quality Gate failed, stop the pipeline
+                    if (qualityGate.status != 'OK') {
+                        error "Quality Gate failed: ${qualityGate.status}"
+                    }
+                }
+            }
+        }
+
         stage('Build') {
             steps {
                 script {
@@ -69,7 +84,6 @@ pipeline {
                 bat "./gradlew publish"
             }
         }
-
 
         stage('Notifications') {
             steps {
