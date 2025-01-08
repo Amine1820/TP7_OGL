@@ -52,20 +52,14 @@ jobs:
       - name: Sonar Qube Scan
         run: ./gradlew sonar
 
-      - name: Check SonarQube Quality Gate
+      - name: Quality Gate
+        id: quality-gate
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        with:
+            scanMetadataReportFile: build/sonar/report-task.txt
         env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          STATUS=$(curl -s -u "${SONAR_TOKEN}:" \
-            "http://197.140.142.82:9000/api/qualitygates/project_status?projectKey=com.example:TP7" \
-            | jq -r '.projectStatus.status')
-          # Check if Quality Gate status is "FAILED"
-          if [ "$STATUS" == "FAILED" ]; then
-            echo "Quality Gate FAILED. Stopping pipeline."
-            exit 1
-          else
-            echo "Quality Gate PASSED."
-          fi
+            SONAR_HOST_URL: http://197.140.142.82:9000/
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Build
         run: |
