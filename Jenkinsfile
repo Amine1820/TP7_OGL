@@ -12,6 +12,7 @@ pipeline {
                     echo 'Archiving test results...'
                     junit 'build/test-results/**/*.xml'
                     echo 'Archiving Cucumber HTML reports...'
+                    cucumber '**/reports/*.json'
                     archiveArtifacts artifacts: 'build/reports/cucumber/html/cucumber-html-reports/*', allowEmptyArchive: true
                 }
             }
