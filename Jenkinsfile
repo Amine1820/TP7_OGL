@@ -70,7 +70,11 @@ pipeline {
             }
         }
 
+
         stage('Notifications') {
+            steps {
+                echo 'Sending notifications...'
+            }
             post {
                 success {
                     slackSend message: "Build and tests passed successfully!"
