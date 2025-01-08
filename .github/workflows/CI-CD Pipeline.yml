@@ -1,0 +1,112 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+
+      - name: Test
+        run: ./gradlew test
+
+      - name: Publish Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: JUnit Tests
+          path: build/test-results/**/*.xml
+          reporter: java-junit
+
+      - name: Archive Cucumber Reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: cucumber-reports
+          path: build/reports/cucumber/html/cucumber-html-reports/*
+
+      - name: Generate JaCoCo Coverage Report
+        run: ./gradlew jacocoTestReport
+
+      - name: Publish JaCoCo Coverage Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: jacoco-report
+          path: build/reports/jacoco/test/html
+
+      - name: Build
+        run: |
+          ./gradlew clean build -x test
+          ./gradlew javadoc
+
+      - name: Archive Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: |
+            build/libs/*.jar
+            build/docs/javadoc
+
+      - name: Publish to Maven Repository
+        env:
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+        run: ./gradlew publish
+
+      - name: Create Issue on Failure
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🔴 Pipeline failure in ${context.workflow}`,
+              body: `Pipeline failed in ${context.workflow}
+            
+              - **Run ID**: ${context.runId}
+              - **Workflow**: ${context.workflow}
+              - **Job**: ${context.job}
+              - **Commit**: ${context.sha}
+              - **Branch**: ${context.ref}
+            
+              [View Run Details](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`
+            });
+            
+            await github.rest.issues.addAssignees({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.data.number,
+              assignees: [context.actor]
+            });
+
+      - name: Notify Slack on Success
+        if: success()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: 'Build and tests passed successfully! 🎉'
+          SLACK_COLOR: 'good'
+
+      - name: Notify Slack on Failure
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: 'Build or tests failed! Check GitHub Actions for details. ❌'
+          SLACK_COLOR: 'danger'
