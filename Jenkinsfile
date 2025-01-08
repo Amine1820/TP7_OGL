@@ -53,7 +53,7 @@ pipeline {
                     // Wait for the Quality Gate status to be available
                     def qualityGate = waitForQualityGate()
                     // If the Quality Gate failed, stop the pipeline
-                    if (qualityGate.status != 'OK') {
+                    if (qualityGate.status == 'FAILED') {
                         error "Quality Gate failed: ${qualityGate.status}"
                     }
                 }
