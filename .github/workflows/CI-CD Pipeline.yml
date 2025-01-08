@@ -59,7 +59,6 @@ jobs:
           STATUS=$(curl -s -u "${SONAR_TOKEN}:" \
             "http://197.140.142.82:9000/api/qualitygates/project_status?projectKey=com.example:TP7" \
             | jq -r '.projectStatus.status')
-
           # Check if Quality Gate status is "FAILED"
           if [ "$STATUS" == "FAILED" ]; then
             echo "Quality Gate FAILED. Stopping pipeline."
