@@ -94,14 +94,29 @@ pipeline {
     }
 
     post {
-            success {
-                slackSend message: "Build and tests passed successfully! "
-            }
-            failure {
-                slackSend message: "Build or tests failed! Check Jenkins for details."
-            }
-            unstable {
-                slackSend message: "Build or tests are unstable. Review the logs."
-            }
+        success {
+            slackSend message: "Build and tests passed successfully!"
+            mail(
+                to: 'la_melzi@esi.dz',
+                subject: 'Jenkins Build Success',
+                body: 'The build and tests were successful. All tests passed.'
+            )
         }
+        failure {
+            slackSend message: "Build or tests failed! Check Jenkins for details."
+            mail(
+                to: 'la_melzi@esi.dz',
+                subject: 'Jenkins Build Failure',
+                body: 'The build or tests failed. Please check the Jenkins console output for more details.'
+            )
+        }
+        unstable {
+            slackSend message: "Build or tests are unstable. Review the logs."
+            mail(
+                to: 'la_melzi@esi.dz',
+                subject: 'Jenkins Build Unstable',
+                body: 'The build or tests are unstable. Please review the logs for more information.'
+            )
+        }
+    }
 }
