@@ -91,7 +91,7 @@ jobs:
       - name: Mail Notification
         uses: dawidd6/action-send-mail@v4
         if: always()
-          with:
+        with:
             connection_url: ${{ secrets.CONNECTION }}
             from: ${{ secrets.SENDER }}
             to: ${{ secrets.RECEIVER }}
